@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ウォーカーズアドベンチャー</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rpgBg: '#1a1c2e',
+                        rpgCard: '#252945',
+                        rpgBorder: '#ffd700',
+                        rpgAccent: '#ff5e7e',
+                        rpgGreen: '#2ec4b6',
+                    },
+                    fontFamily: {
+                        pixel: ['"Press Start 2P"', 'monospace', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+
+        body {
+            font-family: 'DotGothic16', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            background-color: #0f111a;
+            color: #ffffff;
+            touch-action: manipulation;
+        }
+
+        /* RPG Text Box Styling */
+        .rpg-box {
+            background: linear-gradient(135deg, #1e2238 0%, #121424 100%);
+            border: 4px solid #f3b700;
+            box-shadow: 0 8px 0 #000, 0 0 15px rgba(243, 183, 0, 0.4);
+            border-radius: 8px;
+        }
+
+        .rpg-button {
+            background: linear-gradient(180deg, #3a4168 0%, #222641 100%);
+            border: 2px solid #e2b023;
+            box-shadow: 0 4px 0 #111;
+            transition: all 0.1s ease;
+        }
+
+        .rpg-button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #111;
+        }
+
+        .rpg-button-primary {
+            background: linear-gradient(180deg, #ff9f1c 0%, #e05600 100%);
+            border: 2px solid #fff;
+            color: white;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* Screen Shake Animation */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        .shake {
+            animation: shake 0.4s;
+        }
+
+        /* Canvas Pixel Art Rendering */
+        canvas {
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4 text-gray-100">
+
+    <!-- Header Banner -->
+    <header class="w-full max-w-md mb-2 flex items-center justify-between px-3 py-2 bg-gradient-to-r from-purple-800 to-indigo-900 border-b-2 border-yellow-400 rounded-t-lg shadow-lg">
+        <div class="flex items-center space-x-2">
+            <span class="text-xl">🎒</span>
+            <h1 id="header-title" class="font-bold text-sm sm:text-base text-yellow-300 tracking-wider">ウォーカーズアドベンチャー</h1>
+        </div>
+        <div id="header-subtitle" class="text-xs text-purple-200">〜街歩き＆スタンプラリー〜</div>
+    </header>
+
+    <!-- Main Container Frame -->
+    <main class="w-full max-w-md bg-rpgCard border-2 border-yellow-500/80 rounded-b-lg shadow-2xl overflow-hidden relative flex flex-col min-h-[620px]">
+        
+        <!-- ================= TITLE SCREEN ================= -->
+        <section id="title-screen" class="flex flex-col items-center justify-between p-6 h-full flex-grow text-center bg-gradient-to-b from-slate-900 via-indigo-950 to-slate-900">
+            <div class="mt-4 animate-bounce">
+                <span id="title-period-badge" class="inline-block px-3 py-1 bg-yellow-500 text-black font-bold text-xs rounded-full shadow mb-2">ウォーク＆クイズアドベンチャー</span>
+                <h2 id="main-title-text" class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-400 to-yellow-200 drop-shadow">
+                    ウォーカーズ<br>アドベンチャー
+                </h2>
+                <p id="main-subtitle-text" class="text-xs text-yellow-100/80 mt-1">〜目的地を目指して冒険しよう！〜</p>
+            </div>
+
+            <!-- Poster Graphic Mock -->
+            <div class="relative my-4 p-4 rpg-box w-full max-w-xs flex flex-col items-center bg-slate-800/90">
+                <div class="flex justify-center items-center space-x-3 text-4xl mb-3">
+                    <span>⚔️</span>
+                    <span class="text-5xl">🐗</span>
+                    <span>🛡️</span>
+                </div>
+                <p class="text-sm font-semibold text-yellow-300 mb-2">【アドベンチャー概要】</p>
+                <p id="title-desc-text" class="text-xs text-gray-300 leading-relaxed text-left">
+                    「<span id="desc-start-name" class="text-green-400 font-bold">スタート地点</span>」から出発！<br>
+                    街を歩いてモンスターを倒し、ご当地クイズを解いて「<span id="desc-goal-name" class="text-yellow-400 font-bold">ゴール店舗</span>」を目指そう！
+                </p>
+                <div id="desc-reward-text" class="mt-3 text-[11px] bg-slate-900/80 px-3 py-1.5 rounded text-yellow-200 border border-yellow-500/30">
+                    🎁 ゴールすると「お宝クーポン」GET！
+                </div>
+            </div>
+
+            <div class="w-full space-y-2 mb-2">
+                <button id="btn-start" onclick="startGame()" class="w-full py-3.5 rpg-button rpg-button-primary text-lg font-bold rounded-lg shadow-lg tracking-wider">
+                    冒険をはじめる！ 🚀
+                </button>
+                <button onclick="openConfigModal()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-yellow-300 border border-yellow-500/40 rounded text-xs font-bold flex items-center justify-center space-x-1">
+                    <span>⚙️</span>
+                    <span>地域・店舗・クイズ設定を変更</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= WORLD MAP VIEW ================= -->
+        <section id="map-screen" class="hidden flex-col h-full flex-grow relative bg-slate-900">
+            <!-- Top Status Bar -->
+            <div class="bg-slate-950 p-2.5 px-4 border-b border-yellow-500/40 flex items-center justify-between text-xs sm:text-sm font-bold">
+                <div class="flex items-center space-x-3">
+                    <span class="text-yellow-400">Lv.<span id="stat-lv">1</span></span>
+                    <span class="text-red-400">HP: <span id="stat-hp">30</span>/<span id="stat-maxhp">30</span></span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-cyan-400">👟 <span id="stat-steps">0</span>歩</span>
+                    <span class="text-yellow-300">💰 <span id="stat-gold">0</span> G</span>
+                </div>
+            </div>
+
+            <!-- Target Mission Banner -->
+            <div class="bg-indigo-950/90 px-3 py-1.5 border-b border-indigo-500/30 text-xs flex flex-col space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-indigo-200">📍 目的地: <strong id="current-target-name" class="text-yellow-300">チェックポイント</strong></span>
+                    <span id="checkpoint-badge" class="bg-indigo-600 text-white px-2 py-0.5 rounded-full text-[10px]">スタンプ 0/3</span>
+                </div>
+                <!-- GPS Live Distance Indicator -->
+                <div id="gps-info-bar" class="flex items-center justify-between text-[11px] pt-1 border-t border-indigo-900/50">
+                    <span id="gps-status-text" class="text-gray-400">📡 GPS: 未接続</span>
+                    <span id="gps-dist-text" class="text-cyan-300 font-bold">距離: -- m</span>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative flex-grow flex items-center justify-center bg-slate-950 overflow-hidden min-h-[300px]">
+                <canvas id="gameCanvas" class="w-full h-full max-h-[340px] block cursor-pointer"></canvas>
+                
+                <!-- Mini Log Overlay -->
+                <div id="game-dialog" class="absolute bottom-2 left-2 right-2 rpg-box p-2.5 text-xs text-yellow-100 bg-slate-900/95 min-h-[52px] flex items-center justify-between">
+                    <span id="dialog-text">冒険スタート！目的地を目指して進もう！</span>
+                    <span id="dialog-indicator" class="text-yellow-400 animate-pulse hidden">▼</span>
+                </div>
+            </div>
+
+            <!-- Control Pad & Actions -->
+            <div class="p-3 bg-slate-900 border-t border-yellow-500/30 flex flex-col space-y-2">
+                <div class="grid grid-cols-3 gap-2 items-center">
+                    <!-- Step Booster -->
+                    <button onclick="walkSteps(100)" class="col-span-1 py-3 rpg-button text-xs font-bold text-yellow-300 flex flex-col items-center justify-center">
+                        <span class="text-base">🚶‍♂️</span>
+                        <span>100歩進む</span>
+                    </button>
+
+                    <!-- D-Pad Controls -->
+                    <div class="col-span-2 grid grid-cols-3 gap-1 max-w-[170px] mx-auto">
+                        <div></div>
+                        <button onclick="movePlayer(0, -1)" class="py-2 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 border border-slate-500 rounded text-center text-sm">▲</button>
+                        <div></div>
+                        <button onclick="movePlayer(-1, 0)" class="py-2 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 border border-slate-500 rounded text-center text-sm">◀</button>
+                        <button onclick="interactTile()" class="py-2 bg-yellow-600 hover:bg-yellow-500 active:bg-yellow-400 border border-yellow-400 rounded text-center text-xs font-bold text-black">調べる</button>
+                        <button onclick="movePlayer(1, 0)" class="py-2 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 border border-slate-500 rounded text-center text-sm">▶</button>
+                        <div></div>
+                        <button onclick="movePlayer(0, 1)" class="py-2 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 border border-slate-500 rounded text-center text-sm">▼</button>
+                        <div></div>
+                    </div>
+                </div>
+
+                <!-- Footer Quick Menu Buttons -->
+                <div class="flex justify-between space-x-1.5 pt-1 border-t border-slate-800 text-xs">
+                    <button id="gps-toggle-btn" onclick="toggleGpsMode()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 rounded border border-slate-600 text-slate-200 font-bold flex items-center justify-center space-x-1">
+                        <span>📡</span>
+                        <span>GPS連動</span>
+                    </button>
+                    <button onclick="openInventory()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 rounded border border-slate-600 text-slate-200">
+                        🎒 もちもの
+                    </button>
+                    <button onclick="openCheckpoints()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 rounded border border-slate-600 text-slate-200">
+                        🗺️ スタンプ
+                    </button>
+                    <button onclick="showHelpModal()" class="py-1.5 px-2 bg-slate-800 hover:bg-slate-700 rounded border border-slate-600 text-slate-200">
+                        ❓
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= BATTLE / ENCOUNTER SCREEN ================= -->
+        <section id="battle-screen" class="hidden flex-col h-full flex-grow p-4 bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 relative">
+            <div class="text-center font-bold text-red-400 text-sm tracking-widest mb-1 animate-pulse">
+                ⚠️ MONSTER ENCOUNTER ⚠️
+            </div>
+
+            <!-- Enemy Graphic Container -->
+            <div id="enemy-card" class="rpg-box p-4 my-2 flex flex-col items-center justify-center bg-slate-900/90 relative">
+                <div id="enemy-sprite" class="text-7xl my-3 transition-transform duration-200">🐗</div>
+                <h3 id="enemy-name" class="text-base font-bold text-yellow-300">野生のウリボー</h3>
+                
+                <!-- Enemy HP Bar -->
+                <div class="w-full max-w-[200px] bg-gray-700 h-3 rounded-full overflow-hidden border border-slate-600 mt-2">
+                    <div id="enemy-hp-bar" class="bg-red-500 h-full w-full transition-all duration-300"></div>
+                </div>
+                <div class="text-[11px] text-gray-300 mt-1">HP: <span id="enemy-hp-text">20/20</span></div>
+            </div>
+
+            <!-- Battle Dialog Box -->
+            <div class="rpg-box p-3 mb-3 bg-slate-900 text-xs sm:text-sm min-h-[90px] flex items-center">
+                <p id="battle-msg" class="text-yellow-100 leading-relaxed">
+                    野生のウリボーが現れた！どうする？
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div id="battle-actions" class="grid grid-cols-2 gap-2 mt-auto">
+                <button onclick="startQuizAttack()" class="py-3 rpg-button rpg-button-primary text-xs sm:text-sm font-bold">
+                    ⚔️ クイズで攻撃！
+                </button>
+                <button onclick="useHealPotion()" class="py-3 rpg-button text-xs sm:text-sm font-bold text-green-300">
+                    🧪 回復薬を使う (<span id="potion-count">2</span>)
+                </button>
+                <button onclick="useSpecialSkill()" class="py-3 rpg-button text-xs sm:text-sm font-bold text-cyan-300">
+                    ⚡ スマートダッシュ
+                </button>
+                <button onclick="runAway()" class="py-3 rpg-button text-xs sm:text-sm font-bold text-gray-300">
+                    🏃 逃げる
+                </button>
+            </div>
+
+            <!-- Quiz Overlay Container -->
+            <div id="quiz-container" class="hidden absolute inset-0 bg-slate-950/95 p-4 flex flex-col justify-between z-20">
+                <div class="bg-indigo-950 border border-yellow-500/50 p-3 rounded">
+                    <span class="text-xs text-yellow-400 font-bold">💡 スマートクイズ問題</span>
+                    <h4 id="quiz-question" class="text-sm font-bold text-white mt-1">
+                        クイズ問題がここに入ります
+                    </h4>
+                </div>
+
+                <div id="quiz-options" class="space-y-2 my-auto">
+                    <!-- Dynamic option buttons injected via JS -->
+                </div>
+
+                <div class="text-center text-xs text-gray-400">
+                    ※正解するとモンスターに大ダメージ！
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= GOAL & CLEAR SCREEN ================= -->
+        <section id="goal-screen" class="hidden flex-col items-center justify-between p-6 h-full flex-grow text-center bg-gradient-to-b from-indigo-950 via-purple-900 to-slate-950">
+            <div class="mt-2 animate-bounce">
+                <span class="text-5xl">🎉</span>
+                <h2 class="text-2xl font-black text-yellow-300 mt-2">GOAL CLEAR!!</h2>
+                <p id="goal-clear-subtext" class="text-xs text-yellow-100">目的地に無事到着！</p>
+            </div>
+
+            <div class="rpg-box p-4 my-2 w-full max-w-xs bg-slate-900/90 text-left space-y-3">
+                <div class="text-center border-b border-yellow-500/40 pb-2">
+                    <span class="text-xs text-gray-400">🎉 冒険達成証明書 🎉</span>
+                    <h3 class="text-base font-bold text-yellow-400">ウォーカーマスター</h3>
+                </div>
+                
+                <div class="text-xs space-y-1.5 text-gray-200">
+                    <div class="flex justify-between"><span>総歩数:</span><strong id="final-steps" class="text-cyan-300">0 歩</strong></div>
+                    <div class="flex justify-between"><span>倒した敵:</span><strong id="final-kills" class="text-red-300">0 体</strong></div>
+                    <div class="flex justify-between"><span>獲得ゴールド:</span><strong id="final-gold" class="text-yellow-300">0 G</strong></div>
+                    <div class="flex justify-between"><span>スタンプ収集:</span><strong class="text-green-300">達成</strong></div>
+                </div>
+
+                <!-- Reward Coupon Box -->
+                <div class="bg-yellow-500/20 border-2 border-dashed border-yellow-400 p-3 rounded text-center">
+                    <div class="text-[10px] text-yellow-200 font-bold uppercase" id="reward-badge-text">Special Store Reward</div>
+                    <div class="text-lg font-black text-yellow-300 my-1" id="reward-title-text">【100円オフ特典クーポン】</div>
+                    <div class="bg-black/50 py-1 px-2 rounded font-mono text-xs text-green-400 tracking-wider">
+                        CODE: <span id="reward-code">WALK-REWARD-2026</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="resetGame()" class="w-full py-3.5 rpg-button rpg-button-primary font-bold text-sm rounded shadow-lg">
+                もう一度冒険する 🔄
+            </button>
+        </section>
+
+        <!-- ================= MODALS ================= -->
+        <div id="general-modal" class="hidden absolute inset-0 bg-black/80 z-30 flex items-center justify-center p-4">
+            <div class="rpg-box p-4 w-full max-w-xs bg-slate-900 text-left relative flex flex-col max-h-[85vh]">
+                <button onclick="closeModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white px-2 py-1 text-xs">✕ 閉じる</button>
+                <h3 id="modal-title" class="text-sm font-bold text-yellow-300 border-b border-yellow-500/40 pb-2 mb-3">
+                    タイトル
+                </h3>
+                <div id="modal-content" class="text-xs text-gray-200 space-y-2 overflow-y-auto flex-grow">
+                </div>
+            </div>
+        </div>
+
+        <div id="config-modal" class="hidden absolute inset-0 bg-black/90 z-40 flex items-center justify-center p-4">
+            <div class="rpg-box p-4 w-full max-w-md bg-slate-900 text-left relative flex flex-col max-h-[90vh]">
+                <button onclick="closeConfigModal()" class="absolute top-2 right-2 text-gray-400 hover:text-white px-2 py-1 text-xs">✕ 閉じる</button>
+                <h3 class="text-sm font-bold text-yellow-300 border-b border-yellow-500/40 pb-2 mb-3 flex items-center space-x-1">
+                    <span>⚙️</span>
+                    <span>ゲーム設定・プリセット選択</span>
+                </h3>
+
+                <div class="text-xs text-gray-200 space-y-4 overflow-y-auto flex-grow pr-1">
+                    <div class="space-y-1">
+                        <label class="font-bold text-yellow-400">▼ プリセット選択</label>
+                        <select id="preset-selector" onchange="loadPreset(this.value)" class="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-white">
+                            <option value="standard">【スタンダード】スタート地点 ➔ ゴール店舗編</option>
+                            <option value="general">【ヘルスケア】健康ウォーキング・クイズ編</option>
+                            <option value="fantasy">【ファンタジー】始まりの町 ➔ 王立マルシェ編</option>
+                        </select>
+                    </div>
+
+                    <div class="border-t border-slate-700 pt-3 space-y-3">
+                        <div class="font-bold text-yellow-400">▼ スポット・イベント名カスタマイズ</div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">イベントタイトル</label>
+                            <input type="text" id="cfg-title" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="ウォーカーズアドベンチャー">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">サブタイトル / 開催場所など</label>
+                            <input type="text" id="cfg-subtitle" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="〜目的地を目指せ！〜">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">スタート地点名</label>
+                                <input type="text" id="cfg-start" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="スタート地点">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">ゴール店舗 / 目的地</label>
+                                <input type="text" id="cfg-goal" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="ゴール店舗">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">中継点 1</label>
+                                <input type="text" id="cfg-cp1" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="中央公園">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-gray-400 mb-1">中継点 2</label>
+                                <input type="text" id="cfg-cp2" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="シンボル大橋">
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-700 pt-2 mt-2">
+                            <label class="block text-[11px] font-bold text-cyan-300 mb-1">📍 ゴール・中継地のGPS座標（緯度,経度）</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] text-gray-400">中継点1 座標</label>
+                                    <input type="text" id="cfg-cp1-coords" class="w-full bg-slate-800 border border-slate-600 rounded p-1 text-[11px] text-white" value="38.2550, 140.3350">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-gray-400">ゴール店舗 座標</label>
+                                    <input type="text" id="cfg-goal-coords" class="w-full bg-slate-800 border border-slate-600 rounded p-1 text-[11px] text-white" value="38.2590, 140.3390">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">ゴール特典名</label>
+                            <input type="text" id="cfg-reward-title" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="【100円オフ特典クーポン】">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">特典クーポンコード</label>
+                            <input type="text" id="cfg-reward-code" class="w-full bg-slate-800 border border-slate-600 rounded p-1.5 text-xs text-white" value="WALK-REWARD-2026">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-700 mt-2 flex justify-end space-x-2">
+                    <button onclick="closeConfigModal()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-gray-200 rounded text-xs">キャンセル</button>
+                    <button onclick="saveConfigForm()" class="px-4 py-1.5 rpg-button rpg-button-primary rounded text-xs font-bold">保存して適用</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="w-full max-w-md mt-2 text-center text-[11px] text-gray-500">
+        デジタル街歩きアドベンチャープロジェクト
+    </footer>
+
+    <!-- Game Logic Script -->
+    <script>
+        /* ================= AUDIO SYSTEM (Web Audio API) ================= */
+        class RetroAudio {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            playStep() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playEncounter() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(440, now + 0.1);
+                osc.frequency.setValueAtTime(880, now + 0.2);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.35);
+            }
+
+            playAttack() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.15);
+            }
+
+            playVictory() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.15, now + idx * 0.1);
+                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.1);
+                    osc.stop(now + idx * 0.1 + 0.2);
+                });
+            }
+
+            playChest() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.08);
+                osc.frequency.setValueAtTime(783.99, now + 0.16);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.3);
+            }
+        }
+
+        const audio = new RetroAudio();
+
+        /* ================= PRESETS & CONFIG DATA ================= */
+        const PRESETS = {
+            standard: {
+                title: "ウォーカーズアドベンチャー",
+                subtitle: "〜街歩き＆スタンプラリー〜",
+                startName: "スタート地点",
+                cp1Name: "中央公園",
+                cp1Coords: { lat: 38.2550, lng: 140.3350 },
+                cp2Name: "シンボル大橋",
+                cp2Coords: { lat: 38.2570, lng: 140.3370 },
+                goalName: "ゴール店舗",
+                goalCoords: { lat: 38.2590, lng: 140.3390 },
+                rewardTitle: "【ゴール達成 100円オフクーポン】",
+                rewardCode: "WALK-REWARD-2026",
+                monsters: [
+                    { name: "野生のウリボー", icon: "🐗", hp: 20, maxHp: 20, exp: 15, gold: 20, atk: 5 },
+                    { name: "ぷにスライム", icon: "💧", hp: 15, maxHp: 15, exp: 10, gold: 15, atk: 4 },
+                    { name: "川辺のカッパ", icon: "🥒", hp: 25, maxHp: 25, exp: 25, gold: 35, atk: 7 },
+                    { name: "エリアガーディアン", icon: "🐲", hp: 35, maxHp: 35, exp: 50, gold: 80, atk: 9 }
+                ],
+                quizzes: [
+                    { q: "ウォーキングイベントのスタート地点はどこ？", opts: ["スタート地点", "別の街", "警察署", "海外"], ans: 0 },
+                    { q: "ゴール店舗で利用できる便利なサービスは？", opts: ["スムーズな決済と特典利用", "現金のみ利用可", "会員登録必須", "ハガキ注文"], ans: 0 },
+                    { q: "歩行中の水分補給で最も大切なのは？", opts: ["喉が渇く前にこまめに飲む", "我慢する", "一気に1L飲む", "帰宅後まで飲まない"], ans: 0 },
+                    { q: "歩行アドベンチャーの最終目的地はどこ？", opts: ["ゴール店舗", "空港", "山頂", "海底"], ans: 0 }
+                ]
+            },
+            general: {
+                title: "タウンウォーカーアドベンチャー",
+                subtitle: "～街歩き＆スタンプラリー～",
+                startName: "中央公園",
+                cp1Name: "歴史広場",
+                cp1Coords: { lat: 35.6810, lng: 139.7670 },
+                cp2Name: "川沿い散策路",
+                cp2Coords: { lat: 35.6830, lng: 139.7690 },
+                goalName: "タウンショッピングモール",
+                goalCoords: { lat: 35.6850, lng: 139.7710 },
+                rewardTitle: "【モール共通 200円分クーポン】",
+                rewardCode: "TOWN-WALK-2026",
+                monsters: [
+                    { name: "はぐれノラネコ", icon: "🐈", hp: 18, maxHp: 18, exp: 15, gold: 20, atk: 4 },
+                    { name: "街角のイタズラ鳥", icon: "🐦", hp: 15, maxHp: 15, exp: 10, gold: 15, atk: 4 },
+                    { name: "川辺のガマ大王", icon: "🐸", hp: 24, maxHp: 24, exp: 25, gold: 30, atk: 6 },
+                    { name: "買い物カート魔人", icon: "🛒", hp: 32, maxHp: 32, exp: 40, gold: 60, atk: 8 }
+                ],
+                quizzes: [
+                    { q: "1日推奨される歩行歩数（成人目安）は約何歩？", opts: ["約8,000歩", "約500歩", "約50,000歩", "約100歩"], ans: 0 },
+                    { q: "ウォーキングの直前に効果的な準備体操は？", opts: ["軽いストレッチ", "激しい筋トレ", "即座の全力疾走", "何もしない"], ans: 0 },
+                    { q: "水分補給の適切なタイミングは？", opts: ["喉が渇く前にこまめに", "喉がカラカラになってから", "帰宅後にまとめて", "飲まない"], ans: 0 },
+                    { q: "歩数計アプリを活用する最大のメリットは？", opts: ["健康意識向上と達成感", "スマホが軽くなる", "充電が長持ちする", "通信速度向上"], ans: 0 }
+                ]
+            },
+            fantasy: {
+                title: "キングダム・ウォーカー",
+                subtitle: "〜聖なるマルシェを求めて〜",
+                startName: "始まりの街",
+                cp1Name: "精霊の森",
+                cp1Coords: { lat: 35.6900, lng: 139.7000 },
+                cp2Name: "ドラゴン大橋",
+                cp2Coords: { lat: 35.6920, lng: 139.7020 },
+                goalName: "王立グランドマルシェ",
+                goalCoords: { lat: 35.6950, lng: 139.7050 },
+                rewardTitle: "【伝説の英雄の称号＆秘薬】",
+                rewardCode: "HERO-LEGEND-777",
+                monsters: [
+                    { name: "森のスライム", icon: "🟢", hp: 15, maxHp: 15, exp: 10, gold: 15, atk: 3 },
+                    { name: "オークソルジャー", icon: "👹", hp: 25, maxHp: 25, exp: 25, gold: 35, atk: 7 },
+                    { name: "スカイドラゴン", icon: "🐉", hp: 40, maxHp: 40, exp: 60, gold: 100, atk: 10 }
+                ],
+                quizzes: [
+                    { q: "勇者が冒険に出る時に最初に訪れる場所は？", opts: ["始まりの街の宿屋", "ラスボスの城", "海底神殿", "宇宙ステーション"], ans: 0 },
+                    { q: "傷ついた体力を回復する定番アイテムは？", opts: ["ポーション", "どくけし草", "鉄のつるぎ", "きんのたて"], ans: 0 },
+                    { q: "モンスターに大ダメージを与える攻撃方法は？", opts: ["クイズに正解する", "ひたすら謝る", "寝たふりをする", "降参する"], ans: 0 }
+                ]
+            }
+        };
+
+        let activeConfig = JSON.parse(JSON.stringify(PRESETS.standard));
+
+        /* ================= GPS TRACKING STATE ================= */
+        const gpsState = {
+            active: false,
+            watchId: null,
+            lastLat: null,
+            lastLng: null,
+            targetDistance: null
+        };
+
+        /* ================= GAME STATE ================= */
+        const gameState = {
+            player: {
+                x: 1,
+                y: 1,
+                hp: 30,
+                maxHp: 30,
+                level: 1,
+                steps: 0,
+                gold: 50,
+                potions: 2,
+                kills: 0,
+            },
+            checkpoints: [],
+            currentEnemy: null,
+            activeQuiz: null,
+            chests: [
+                { x: 3, y: 2, opened: false, item: "ポーション", gold: 30 },
+                { x: 7, y: 5, opened: false, item: "ゴールド宝箱", gold: 100 }
+            ]
+        };
+
+        const mapLayout = [
+            [3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+            [3, 1, 1, 1, 3, 3, 1, 1, 1, 3],
+            [3, 1, 3, 1, 1, 1, 1, 3, 1, 3],
+            [3, 1, 3, 3, 3, 3, 1, 3, 1, 3],
+            [3, 1, 1, 1, 1, 1, 1, 3, 1, 3],
+            [3, 3, 3, 2, 2, 1, 3, 3, 1, 3],
+            [3, 1, 1, 2, 1, 1, 1, 1, 1, 3],
+            [3, 1, 3, 2, 1, 3, 3, 3, 1, 3],
+            [3, 1, 1, 1, 1, 1, 3, 3, 1, 3],
+            [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+        ];
+
+        let canvas, ctx;
+
+        window.onload = () => {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            applyConfigToUI();
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Keyboard navigation
+            window.addEventListener('keydown', (e) => {
+                if (document.getElementById('map-screen').classList.contains('hidden')) return;
+                if (e.key === 'ArrowUp' || e.key === 'w') movePlayer(0, -1);
+                if (e.key === 'ArrowDown' || e.key === 's') movePlayer(0, 1);
+                if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer(-1, 0);
+                if (e.key === 'ArrowRight' || e.key === 'd') movePlayer(1, 0);
+                if (e.key === ' ' || e.key === 'Enter') interactTile();
+            });
+        };
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth || 360;
+            canvas.height = container.clientHeight || 300;
+            render();
+        }
+
+        function render() {
+            if (!ctx || !canvas) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const rows = mapLayout.length;
+            const cols = mapLayout[0].length;
+            const tileSize = Math.min(canvas.width / cols, canvas.height / rows);
+            const offsetX = (canvas.width - cols * tileSize) / 2;
+            const offsetY = (canvas.height - rows * tileSize) / 2;
+
+            // Draw grid map
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const tile = mapLayout[r][c];
+                    const x = offsetX + c * tileSize;
+                    const y = offsetY + r * tileSize;
+
+                    if (tile === 3) {
+                        ctx.fillStyle = '#1e293b';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                        ctx.fillStyle = '#334155';
+                        ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+                    } else if (tile === 2) {
+                        ctx.fillStyle = '#1e40af';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                        ctx.fillStyle = '#3b82f6';
+                        ctx.fillRect(x + 2, y + 2, tileSize - 4, tileSize - 4);
+                    } else {
+                        ctx.fillStyle = tile === 1 ? '#15803d' : '#047857';
+                        ctx.fillRect(x, y, tileSize, tileSize);
+                        ctx.strokeStyle = '#166534';
+                        ctx.strokeRect(x, y, tileSize, tileSize);
+                    }
+                }
+            }
+
+            // Draw Checkpoints
+            gameState.checkpoints.forEach(cp => {
+                const x = offsetX + cp.x * tileSize + tileSize / 2;
+                const y = offsetY + cp.y * tileSize + tileSize / 2;
+                
+                ctx.font = `${tileSize * 0.6}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let icon = '📍';
+                if (cp.isStart) icon = '🏠';
+                else if (cp.isGoal) icon = '🏪';
+                else icon = cp.visited ? '✅' : '🚩';
+
+                ctx.fillText(icon, x, y);
+
+                ctx.font = '10px DotGothic16, sans-serif';
+                ctx.fillStyle = cp.visited ? '#4ade80' : '#fde047';
+                ctx.fillText(cp.name, x, y + tileSize * 0.4);
+            });
+
+            // Draw Chests
+            gameState.chests.forEach(chest => {
+                if (chest.opened) return;
+                const x = offsetX + chest.x * tileSize + tileSize / 2;
+                const y = offsetY + chest.y * tileSize + tileSize / 2;
+                ctx.font = `${tileSize * 0.5}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🎁', x, y);
+            });
+
+            // Draw Player
+            const px = offsetX + gameState.player.x * tileSize + tileSize / 2;
+            const py = offsetY + gameState.player.y * tileSize + tileSize / 2;
+            ctx.font = `${tileSize * 0.6}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🚶‍♂️', px, py);
+        }
+
+        function applyConfigToUI() {
+            document.getElementById('header-title').innerText = activeConfig.title;
+            document.getElementById('header-subtitle').innerText = activeConfig.subtitle;
+            document.getElementById('main-title-text').innerHTML = activeConfig.title.replace('アドベンチャー', '<br>アドベンチャー');
+            document.getElementById('main-subtitle-text').innerText = activeConfig.subtitle;
+            document.getElementById('desc-start-name').innerText = activeConfig.startName;
+            document.getElementById('desc-goal-name').innerText = activeConfig.goalName;
+
+            document.getElementById('reward-title-text').innerText = activeConfig.rewardTitle;
+            document.getElementById('reward-code').innerText = activeConfig.rewardCode;
+            document.getElementById('goal-clear-subtext').innerText = `${activeConfig.goalName} に無事到着！`;
+
+            gameState.checkpoints = [
+                { id: 1, name: activeConfig.startName + "（スタート）", x: 1, y: 1, visited: true, isStart: true },
+                { id: 2, name: activeConfig.cp1Name, x: 6, y: 2, visited: false, lat: activeConfig.cp1Coords?.lat, lng: activeConfig.cp1Coords?.lng },
+                { id: 3, name: activeConfig.cp2Name, x: 4, y: 6, visited: false, lat: activeConfig.cp2Coords?.lat, lng: activeConfig.cp2Coords?.lng },
+                { id: 4, name: activeConfig.goalName, x: 8, y: 8, visited: false, isGoal: true, lat: activeConfig.goalCoords?.lat, lng: activeConfig.goalCoords?.lng }
+            ];
+
+            document.getElementById('cfg-title').value = activeConfig.title;
+            document.getElementById('cfg-subtitle').value = activeConfig.subtitle;
+            document.getElementById('cfg-start').value = activeConfig.startName;
+            document.getElementById('cfg-goal').value = activeConfig.goalName;
+            document.getElementById('cfg-cp1').value = activeConfig.cp1Name;
+            document.getElementById('cfg-cp2').value = activeConfig.cp2Name;
+            document.getElementById('cfg-reward-title').value = activeConfig.rewardTitle;
+            document.getElementById('cfg-reward-code').value = activeConfig.rewardCode;
+
+            if (activeConfig.cp1Coords) {
+                document.getElementById('cfg-cp1-coords').value = `${activeConfig.cp1Coords.lat}, ${activeConfig.cp1Coords.lng}`;
+            }
+            if (activeConfig.goalCoords) {
+                document.getElementById('cfg-goal-coords').value = `${activeConfig.goalCoords.lat}, ${activeConfig.goalCoords.lng}`;
+            }
+        }
+
+        function startGame() {
+            audio.init();
+            document.getElementById('title-screen').classList.add('hidden');
+            document.getElementById('map-screen').classList.remove('hidden');
+            document.getElementById('map-screen').classList.add('flex');
+            resizeCanvas();
+            updateUI();
+            logDialog(`冒険スタート！まずは「${activeConfig.cp1Name}」を目指そう！`);
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = gameState.player.x + dx;
+            const newY = gameState.player.y + dy;
+
+            if (newY < 0 || newY >= mapLayout.length || newX < 0 || newX >= mapLayout[0].length) return;
+            if (mapLayout[newY][newX] === 3) {
+                logDialog("⚠️ 通行できません！");
+                return;
+            }
+
+            gameState.player.x = newX;
+            gameState.player.y = newY;
+            gameState.player.steps += 10;
+            audio.playStep();
+
+            checkTileEvents();
+            render();
+            updateUI();
+
+            if (Math.random() < 0.12) {
+                setTimeout(triggerEncounter, 200);
+            }
+        }
+
+        function walkSteps(num) {
+            gameState.player.steps += num;
+            audio.playStep();
+            logDialog(`${num}歩 進みました！(累計: ${gameState.player.steps}歩)`);
+            updateUI();
+            if (Math.random() < 0.35) {
+                setTimeout(triggerEncounter, 200);
+            }
+        }
+
+        function checkTileEvents() {
+            gameState.checkpoints.forEach(cp => {
+                if (cp.x === gameState.player.x && cp.y === gameState.player.y) {
+                    if (!cp.visited) {
+                        cp.visited = true;
+                        audio.playVictory();
+                        logDialog(`🎉 「${cp.name}」に到着！スタンプを獲得しました！`);
+                        
+                        if (cp.isGoal) {
+                            const unvisited = gameState.checkpoints.filter(c => !c.visited && !c.isGoal);
+                            if (unvisited.length === 0) {
+                                setTimeout(triggerGoalClear, 500);
+                            } else {
+                                logDialog(`🏪 ゴールに到達！他のスタンプも全て集めよう！`);
+                            }
+                        }
+                    }
+                }
+            });
+
+            gameState.chests.forEach(chest => {
+                if (!chest.opened && chest.x === gameState.player.x && chest.y === gameState.player.y) {
+                    chest.opened = true;
+                    gameState.player.gold += chest.gold;
+                    gameState.player.potions += 1;
+                    audio.playChest();
+                    logDialog(`🎁 宝箱を発見！ ${chest.gold} G と ポーション を手に入れた！`);
+                }
+            });
+        }
+
+        function interactTile() {
+            checkTileEvents();
+            render();
+            updateUI();
+        }
+
+        function triggerEncounter() {
+            audio.playEncounter();
+            const monsters = activeConfig.monsters || PRESETS.standard.monsters;
+            const m = monsters[Math.floor(Math.random() * monsters.length)];
+            gameState.currentEnemy = { ...m, currentHp: m.hp };
+
+            document.getElementById('enemy-sprite').innerText = gameState.currentEnemy.icon;
+            document.getElementById('enemy-name').innerText = gameState.currentEnemy.name;
+            document.getElementById('enemy-hp-text').innerText = `${gameState.currentEnemy.currentHp}/${gameState.currentEnemy.hp}`;
+            document.getElementById('enemy-hp-bar').style.width = '100%';
+            document.getElementById('battle-msg').innerText = `${gameState.currentEnemy.name} が現れた！どうする？`;
+
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('map-screen').classList.add('hidden');
+            document.getElementById('battle-screen').classList.remove('hidden');
+            document.getElementById('battle-screen').classList.add('flex');
+        }
+
+        function startQuizAttack() {
+            const quizzes = activeConfig.quizzes || PRESETS.standard.quizzes;
+            const qObj = quizzes[Math.floor(Math.random() * quizzes.length)];
+            gameState.activeQuiz = qObj;
+
+            document.getElementById('quiz-question').innerText = qObj.q;
+            const optsDiv = document.getElementById('quiz-options');
+            optsDiv.innerHTML = '';
+
+            qObj.opts.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-700 active:bg-yellow-600 text-yellow-100 rounded text-xs font-bold border border-yellow-500/40 text-left transition-colors";
+                btn.innerText = `${idx + 1}. ${optText}`;
+                btn.onclick = () => answerQuiz(idx);
+                optsDiv.appendChild(btn);
+            });
+
+            document.getElementById('quiz-container').classList.remove('hidden');
+        }
+
+        function answerQuiz(selectedIdx) {
+            document.getElementById('quiz-container').classList.add('hidden');
+            if (!gameState.currentEnemy) return;
+
+            if (selectedIdx === gameState.activeQuiz.ans) {
+                audio.playAttack();
+                const dmg = 15 + gameState.player.level * 5;
+                gameState.currentEnemy.currentHp = Math.max(0, gameState.currentEnemy.currentHp - dmg);
+                
+                const pct = (gameState.currentEnemy.currentHp / gameState.currentEnemy.hp) * 100;
+                document.getElementById('enemy-hp-bar').style.width = pct + '%';
+                document.getElementById('enemy-hp-text').innerText = `${gameState.currentEnemy.currentHp}/${gameState.currentEnemy.hp}`;
+
+                document.getElementById('enemy-card').classList.add('shake');
+                setTimeout(() => document.getElementById('enemy-card').classList.remove('shake'), 400);
+
+                if (gameState.currentEnemy.currentHp <= 0) {
+                    audio.playVictory();
+                    gameState.player.kills += 1;
+                    gameState.player.gold += gameState.currentEnemy.gold;
+                    document.getElementById('battle-msg').innerText = `正解！ ${dmg} の大ダメージ！ ${gameState.currentEnemy.name} を倒した！ (+${gameState.currentEnemy.gold} G)`;
+                    setTimeout(() => {
+                        document.getElementById('battle-screen').classList.add('hidden');
+                        document.getElementById('map-screen').classList.remove('hidden');
+                        updateUI();
+                        logDialog(`🎉 モンスターを撃破し、${gameState.currentEnemy.gold} G を獲得！`);
+                    }, 1200);
+                } else {
+                    document.getElementById('battle-msg').innerText = `正解！ ${dmg} の大ダメージを与えた！`;
+                }
+            } else {
+                const enemyAtk = gameState.currentEnemy.atk || 5;
+                gameState.player.hp = Math.max(0, gameState.player.hp - enemyAtk);
+                document.getElementById('battle-msg').innerText = `不正解... 反撃を受けて ${enemyAtk} のダメージ！`;
+                updateUI();
+
+                if (gameState.player.hp <= 0) {
+                    alertModal("GAMEOVER", "HPが0になってしまった... リトライします。", () => {
+                        gameState.player.hp = gameState.player.maxHp;
+                        document.getElementById('battle-screen').classList.add('hidden');
+                        document.getElementById('map-screen').classList.remove('hidden');
+                        updateUI();
+                    });
+                }
+            }
+        }
+
+        function useHealPotion() {
+            if (gameState.player.potions <= 0) {
+                document.getElementById('battle-msg').innerText = "ポーションを持っていません！";
+                return;
+            }
+            gameState.player.potions--;
+            gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 20);
+            audio.playChest();
+            document.getElementById('battle-msg').innerText = `ポーションを使って HPが 20 回復した！`;
+            document.getElementById('potion-count').innerText = gameState.player.potions;
+            updateUI();
+        }
+
+        function useSpecialSkill() {
+            audio.playAttack();
+            const dmg = 25;
+            if (gameState.currentEnemy) {
+                gameState.currentEnemy.currentHp = Math.max(0, gameState.currentEnemy.currentHp - dmg);
+                const pct = (gameState.currentEnemy.currentHp / gameState.currentEnemy.hp) * 100;
+                document.getElementById('enemy-hp-bar').style.width = pct + '%';
+                document.getElementById('enemy-hp-text').innerText = `${gameState.currentEnemy.currentHp}/${gameState.currentEnemy.hp}`;
+                
+                if (gameState.currentEnemy.currentHp <= 0) {
+                    audio.playVictory();
+                    gameState.player.kills += 1;
+                    gameState.player.gold += gameState.currentEnemy.gold;
+                    document.getElementById('battle-msg').innerText = `スマートダッシュ！ ${dmg} の特大ダメージ！敵を撃破！`;
+                    setTimeout(() => {
+                        document.getElementById('battle-screen').classList.add('hidden');
+                        document.getElementById('map-screen').classList.remove('hidden');
+                        updateUI();
+                    }, 1200);
+                } else {
+                    document.getElementById('battle-msg').innerText = `スマートダッシュ成功！ ${dmg} の特大ダメージ！`;
+                }
+            }
+        }
+
+        function runAway() {
+            document.getElementById('battle-msg').innerText = "無事に逃げ出した！";
+            setTimeout(() => {
+                document.getElementById('battle-screen').classList.add('hidden');
+                document.getElementById('map-screen').classList.remove('hidden');
+                updateUI();
+            }, 600);
+        }
+
+        function triggerGoalClear() {
+            audio.playVictory();
+            document.getElementById('final-steps').innerText = gameState.player.steps.toLocaleString() + ' 歩';
+            document.getElementById('final-kills').innerText = gameState.player.kills + ' 体';
+            document.getElementById('final-gold').innerText = gameState.player.gold + ' G';
+
+            document.getElementById('map-screen').classList.add('hidden');
+            document.getElementById('goal-screen').classList.remove('hidden');
+        }
+
+        function resetGame() {
+            gameState.player.steps = 0;
+            gameState.player.hp = gameState.player.maxHp;
+            gameState.player.gold = 50;
+            gameState.player.kills = 0;
+            gameState.player.x = 1;
+            gameState.player.y = 1;
+
+            gameState.checkpoints.forEach(cp => {
+                cp.visited = cp.isStart ? true : false;
+            });
+
+            gameState.chests.forEach(c => c.opened = false);
+
+            document.getElementById('goal-screen').classList.add('hidden');
+            document.getElementById('title-screen').classList.remove('hidden');
+        }
+
+        function updateUI() {
+            document.getElementById('stat-lv').innerText = gameState.player.level;
+            document.getElementById('stat-hp').innerText = gameState.player.hp;
+            document.getElementById('stat-maxhp').innerText = gameState.player.maxHp;
+            document.getElementById('stat-steps').innerText = gameState.player.steps.toLocaleString();
+            document.getElementById('stat-gold').innerText = gameState.player.gold;
+            document.getElementById('potion-count').innerText = gameState.player.potions;
+
+            const visitedCount = gameState.checkpoints.filter(c => c.visited).length;
+            document.getElementById('checkpoint-badge').innerText = `スタンプ ${visitedCount}/${gameState.checkpoints.length}`;
+
+            const nextCp = gameState.checkpoints.find(c => !c.visited);
+            if (nextCp) {
+                document.getElementById('current-target-name').innerText = nextCp.name;
+            } else {
+                document.getElementById('current-target-name').innerText = activeConfig.goalName + " (目標達成!)";
+            }
+        }
+
+        function logDialog(txt) {
+            const el = document.getElementById('dialog-text');
+            if (el) el.innerText = txt;
+        }
+
+        /* ================= GPS FUNCTIONS ================= */
+        function getHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function toggleGpsMode() {
+            if (!navigator.geolocation) {
+                alertModal("GPS未対応", "お使いの環境はGPS位置情報に対応していません。");
+                return;
+            }
+
+            const btn = document.getElementById('gps-toggle-btn');
+            const statusText = document.getElementById('gps-status-text');
+
+            if (gpsState.active) {
+                if (gpsState.watchId !== null) navigator.geolocation.clearWatch(gpsState.watchId);
+                gpsState.active = false;
+                gpsState.watchId = null;
+                btn.classList.remove('bg-green-600', 'text-white', 'border-green-400');
+                btn.classList.add('bg-slate-800', 'text-slate-200');
+                statusText.innerText = "📡 GPS: OFF";
+                document.getElementById('gps-dist-text').innerText = "距離: -- m";
+                logDialog("GPS追跡をOFFにしました。");
+            } else {
+                gpsState.active = true;
+                btn.classList.remove('bg-slate-800', 'text-slate-200');
+                btn.classList.add('bg-green-600', 'text-white', 'border-green-400');
+                statusText.innerText = "📡 GPS: 接続中...";
+
+                gpsState.watchId = navigator.geolocation.watchPosition(
+                    onGpsSuccess,
+                    onGpsError,
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+                logDialog("📡 GPS追跡を開始しました！目的地へ実際に歩いてみましょう。");
+            }
+        }
+
+        function onGpsSuccess(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            document.getElementById('gps-status-text').innerText = `📡 GPS: 追跡中 (精度 ${Math.round(position.coords.accuracy)}m)`;
+
+            if (gpsState.lastLat !== null && gpsState.lastLng !== null) {
+                const distMoved = getHaversineDistance(gpsState.lastLat, gpsState.lastLng, lat, lng);
+                if (distMoved >= 2) {
+                    const addedSteps = Math.floor(distMoved * 1.3);
+                    gameState.player.steps += addedSteps;
+                    if (Math.random() < 0.15) triggerEncounter();
+                }
+            }
+            gpsState.lastLat = lat;
+            gpsState.lastLng = lng;
+
+            const nextCp = gameState.checkpoints.find(c => !c.visited);
+            if (nextCp && nextCp.lat && nextCp.lng) {
+                const distToTarget = getHaversineDistance(lat, lng, nextCp.lat, nextCp.lng);
+                gpsState.targetDistance = Math.round(distToTarget);
+                document.getElementById('gps-dist-text').innerText = `直近目標まで 約${gpsState.targetDistance}m`;
+
+                if (distToTarget <= 40 && !nextCp.visited) {
+                    nextCp.visited = true;
+                    audio.playVictory();
+                    logDialog(`🎉 GPS到達！「${nextCp.name}」のスタンプを獲得しました！`);
+                    updateUI();
+                    if (nextCp.isGoal) {
+                        const unvisited = gameState.checkpoints.filter(c => !c.visited && !c.isGoal);
+                        if (unvisited.length === 0) triggerGoalClear();
+                    }
+                }
+            } else {
+                document.getElementById('gps-dist-text').innerText = "目標なし";
+            }
+
+            updateUI();
+        }
+
+        function onGpsError(err) {
+            document.getElementById('gps-status-text').innerText = "📡 GPS: 取得エラー";
+            logDialog("⚠️ GPS位置情報の取得に失敗しました。位置情報の許可を確認してください。");
+        }
+
+        /* ================= MODAL & DIALOG UTILS ================= */
+        function openModal(title, htmlContent) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerHTML = htmlContent;
+            document.getElementById('general-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('general-modal').classList.add('hidden');
+        }
+
+        function alertModal(title, text, onConfirm) {
+            const content = `
+                <p class="mb-4 text-gray-200">${text}</p>
+                <button id="modal-confirm-btn" class="w-full py-2 rpg-button rpg-button-primary font-bold">OK</button>
+            `;
+            openModal(title, content);
+            document.getElementById('modal-confirm-btn').onclick = () => {
+                closeModal();
+                if (onConfirm) onConfirm();
+            };
+        }
+
+        function showHelpModal() {
+            const content = `
+                <div class="space-y-2 leading-relaxed">
+                    <p>🎯 <strong>目的:</strong> スタート地点「${activeConfig.startName}」から出発し、街のチェックポイントを巡り「${activeConfig.goalName}」を目指します。</p>
+                    <p>📡 <strong>GPS機能:</strong> 下部の「GPS連動」ボタンを押すと、実際の移動距離に合わせて歩数が増加し、目標地点に近づくと自動チェックインします。</p>
+                    <p>🚶‍♂️ <strong>手動操作:</strong> 画面上のD-Padや「100歩進む」ボタンで手動移動も可能です。</p>
+                    <p>⚔️ <strong>バトル:</strong> モンスターが出現したら、クイズに答えて大ダメージを与えましょう！</p>
+                </div>
+            `;
+            openModal("❓ 遊び方ガイド", content);
+        }
+
+        function openInventory() {
+            const content = `
+                <div class="space-y-2">
+                    <div class="flex justify-between border-b border-slate-700 pb-1"><span>🧪 回復薬 (ポーション)</span><strong class="text-green-400">${gameState.player.potions} 個</strong></div>
+                    <div class="flex justify-between border-b border-slate-700 pb-1"><span>💰 ゴールド</span><strong class="text-yellow-400">${gameState.player.gold} G</strong></div>
+                    <div class="flex justify-between border-b border-slate-700 pb-1"><span>👟 総歩数</span><strong class="text-cyan-400">${gameState.player.steps} 歩</strong></div>
+                </div>
+            `;
+            openModal("🎒 もちもの一覧", content);
+        }
+
+        function openCheckpoints() {
+            let listHtml = '<div class="space-y-2">';
+            gameState.checkpoints.forEach(cp => {
+                const icon = cp.visited ? '✅' : '⏳';
+                const color = cp.visited ? 'text-green-400' : 'text-gray-400';
+                listHtml += `<div class="flex justify-between items-center p-2 bg-slate-800 rounded border border-slate-700">
+                    <span>${icon} ${cp.name}</span>
+                    <span class="${color} font-bold text-[11px]">${cp.visited ? '達成' : '未訪'}</span>
+                </div>`;
+            });
+            listHtml += '</div>';
+            openModal("🗺️ スタンプシート", listHtml);
+        }
+
+        function openConfigModal() {
+            document.getElementById('config-modal').classList.remove('hidden');
+        }
+
+        function closeConfigModal() {
+            document.getElementById('config-modal').classList.add('hidden');
+        }
+
+        function loadPreset(presetKey) {
+            if (PRESETS[presetKey]) {
+                activeConfig = JSON.parse(JSON.stringify(PRESETS[presetKey]));
+                applyConfigToUI();
+            }
+        }
+
+        function saveConfigForm() {
+            activeConfig.title = document.getElementById('cfg-title').value;
+            activeConfig.subtitle = document.getElementById('cfg-subtitle').value;
+            activeConfig.startName = document.getElementById('cfg-start').value;
+            activeConfig.goalName = document.getElementById('cfg-goal').value;
+            activeConfig.cp1Name = document.getElementById('cfg-cp1').value;
+            activeConfig.cp2Name = document.getElementById('cfg-cp2').value;
+            activeConfig.rewardTitle = document.getElementById('cfg-reward-title').value;
+            activeConfig.rewardCode = document.getElementById('cfg-reward-code').value;
+
+            const cp1CoordStr = document.getElementById('cfg-cp1-coords').value;
+            if (cp1CoordStr.includes(',')) {
+                const parts = cp1CoordStr.split(',');
+                activeConfig.cp1Coords = { lat: parseFloat(parts[0].trim()), lng: parseFloat(parts[1].trim()) };
+            }
+
+            const goalCoordStr = document.getElementById('cfg-goal-coords').value;
+            if (goalCoordStr.includes(',')) {
+                const parts = goalCoordStr.split(',');
+                activeConfig.goalCoords = { lat: parseFloat(parts[0].trim()), lng: parseFloat(parts[1].trim()) };
+            }
+
+            applyConfigToUI();
+            closeConfigModal();
+            logDialog("⚙️ 設定を更新しました！");
+        }
+    </script>
+</body>
+</html>
